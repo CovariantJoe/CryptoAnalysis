@@ -3,7 +3,7 @@
 ## Description
 This program is a real-time analyzer of the crypto currency market with SMTP or local alerts. Its biggest benefit is the capacity to follow an arbitrarily large number of crypto currencies at the same time, while defining for each one different thresholds to receive alerts. The program consists of a GUI that acts as the hub while other parts connect to the CoinGecko API. This program is great for short term analysis which makes it very strong to follow volatile crypto currencies where change develops fast. 
 
-![Alt Text](images/program.png)
+![Alt Text](program.png)
 
 ## Characteristics
 - GUI: Add or remove crypto curencies, change the threshold for each one, and change program configuration like refresh interval and type of alert.
