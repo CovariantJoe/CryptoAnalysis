@@ -90,9 +90,7 @@ if __name__ == "__main__":
     valid = []
     thresholds = {}
     tm = time.time() 
-##  1738175548.420135: 100 entries
-##  1738184426.260612; last values
-    tm = 1738184426.260612
+
 # Check there is enough data for each currency
 # Then loads threshold configurations and sets default values if they don't exist
     for i in names.index:
@@ -100,22 +98,23 @@ if __name__ == "__main__":
         configs = pd.read_sql(configQuery + str(i) + " ORDER BY alertID DESC LIMIT 1;",con)
         if configs.empty:
             configs = pd.DataFrame([{"CurrencyID":i,"timeWindow":5,"minimumData":30}])
-            data = prices[prices["CurrencyID"] == i]
-            winBegin = tm - 3600*configs["timeWindow"].values[0]
-            if data.time[data.time > winBegin].count() < configs.minimumData.values[0]:
-                continue
+        data = prices[prices["CurrencyID"] == i]
+        winBegin = tm - 3600*configs["timeWindow"].values[0]
+        if data.time[data.time > winBegin].count() < configs.minimumData.values[0]:
+            continue
+        else:
+            alerts = pd.read_sql(thresholdQuery + str(i)+" ORDER BY alertID DESC LIMIT 1;",con)
+            if alerts.empty:
+                thresholds[str(i)] = [5,5,True,95]
             else:
-                alerts = pd.read_sql(thresholdQuery + str(i)+" ORDER BY alertID DESC LIMIT 1;",con)
-                if alerts.empty:
-                    thresholds[str(i)] = [5,5,True,95]
-                else:
-                    thresholds[str(i)] = [alerts.gain.values[0],alerts.longGain.values[0],alerts.movingAvg.values[0],alerts.anomaly.values[0]]
-                valid.append(data[data.time > winBegin])
+                thresholds[str(i)] = [alerts.gain.values[0],alerts.longGain.values[0],alerts.movingAvg.values[0],alerts.anomaly.values[0]]
+            valid.append(data[data.time > winBegin])
     con.close()
     if valid == []:
         print("The Database was updated but is still waiting for data")
 # Perform calculations and check thresholds iterating for each currency with enough data
     for data in valid:
+        i = data.CurrencyID.values[0]
         test1 = Returns(data) # To check if returns had a significant immediate change 
         test2 = Returns(data,data.price.count() ) # To check if returns changed significantly in the whole analysis period
         test3 = movingAverage(data,20) 

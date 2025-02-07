@@ -37,7 +37,7 @@ int database()
     int updates;
     if (sqlite3_open("Crypto.db",&db) != SQLITE_OK)
     {
-        Alert(std::vector<std::string> (1,"Error opening database: " + std::string(sqlite3_errmsg(db))),"error");
+        Alert(std::vector<std::string> (1,"Error opening database, probably the database is missing: " + std::string(sqlite3_errmsg(db))),"error");
         return -1;
     }
     updates = API(db);

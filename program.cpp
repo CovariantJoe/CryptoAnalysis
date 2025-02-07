@@ -74,7 +74,6 @@ int main() {
     // Main loop to keep running while the GUI is open
     auto before = std::chrono::steady_clock::now();
     while (isGuiRunning.load()) {
-
         sqlite3* db;
         if (sqlite3_open("Crypto.db",&db) != SQLITE_OK)
         {
@@ -105,12 +104,12 @@ int main() {
             {
                 std::future<std::vector<std::string>> output = std::async(std::launch::async, Analyze, "python3 Analysis.py");
                 std::vector<std::string> result = output.get();
-                if ( strcmp(result[0].c_str(),".") == 0 && count2 == 0)
+                if ( strcmp(result[0].c_str(),".\n") == 0 && count2 == 0)
                 {
                     Alert(std::vector<std::string>(1,"There is now enough data for at least 1 currency to perform analyses from now on"),"local");
                     count2 = 1;
                 }
-                Alert(result,"local");
+                Alert(result,mode.c_str());
             }
             before = now;
         }

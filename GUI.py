@@ -38,7 +38,7 @@ def showData():
     for i in names.index:
         dateQuery = "SELECT date FROM Prices WHERE CurrencyID = " + str(i) + " ORDER BY date DESC LIMIT 1; "
         try:
-            date = " Latest price retrieved at " + pd.read_sql(dateQuery,con).values[0][0] +"\n"
+            date = " Latest price retrieved is from " + pd.read_sql(dateQuery,con).values[0][0] +"\n"
         except (IndexError,pd.errors.DatabaseError):
             date = " A price hasn't been saved \n"
         txt = txt + f"{names.loc[i,'name']}:" + f" API name: {names.loc[i,'GeckoID']}." + date
@@ -58,7 +58,7 @@ def updateFields(entry, var='Add a new currency',index='1',mode='w'):
     '''
     val = option_var.get()
     if mode == 'save':
-        save(val, entry)
+        save(val)
     else:
         error_label.pack_forget()
 
@@ -148,10 +148,19 @@ def updateFields(entry, var='Add a new currency',index='1',mode='w'):
         label2.pack(pady=5)
         entry[1] = tk.Entry(window)
         entry[1].pack(pady=5)
-
+        
+        label3 = tk.Label(window, text="Enter a gmail, outlook or hotmail e-mail address for the alerts",**styleText)
+        label3.pack(pady=5)
+        entry[2] = tk.Entry(window)
+        entry[2].pack(pady=5)
+        
+        label4 = tk.Label(window, text="Enter the password associated with the e-mail account",**styleText)
+        label4.pack(pady=5)
+        entry[3] = tk.Entry(window)
+        entry[3].pack(pady=5)
 
         
-        widgets.extend([label0,label1,entry[0],label2,entry[1]])
+        widgets.extend([label0,label1,entry[0],label2,entry[1],label3,entry[2],label4,entry[3]])
         #entries.extend([entry[1]])
         return
         
@@ -187,13 +196,17 @@ def showError(code, error = ''):
         error_label.config(text="Invalid mode, choose mail or local", fg="red")
     elif code == 12:
         error_label.config(text= f"Error reading database, did you delete the configs?: {error}", fg = "red")
+    elif code == 13:
+        error_label.config(text= f"Invalid e-mail", fg = "red")
+    elif code == 14:
+        error_label.config(text= f"Must enter the password too", fg = "red")
     elif code == -1:
         error_label.config(text="Changes saved succesfully", fg="green")
     
     error_label.pack(pady=10)
     return
 
-def save(val, entries):
+def save(val):
     '''
     Check user input for errors, then write inputs to database. This is for every entry field in the GUI
     '''
@@ -307,9 +320,9 @@ def save(val, entries):
             
     elif val == "Change program config":
         cursor = sqlite3.Cursor(con)
-        statement = "INSERT INTO Mode (updateFreq,mode) VALUES (?,?);"
-        getMode = "SELECT updateFreq, mode FROM Mode ORDER BY key DESC LIMIT 1;"
-        
+        statement = "INSERT INTO Mode (updateFreq,mode,mail,password) VALUES (?,?,?,?);"
+        getMode = "SELECT updateFreq,mode,mail,password FROM Mode ORDER BY key DESC LIMIT 1;"
+
         try:
             Vals = pd.read_sql(getMode,con).values[0]
         except pd.errors.DatabaseError as e:
@@ -339,12 +352,32 @@ def save(val, entries):
                 showError(11)
                 con.close()
                 return
+            
+        if entry[2].get() != '':
+            Vals[2] = entry[2].get()
+            cond = "gmail" in Vals[2] or "outlook" in Vals[2] or "hotmail" in Vals[2] or "alumnos.udg" in Vals[2]
+            if "@" not in Vals[2] or (".com" not in Vals[2] and ".mx" not in Vals[2]) or not cond or len( Vals[2][:Vals[2].find("@")] ) == 0:
+                showError(13)
+                con.close()
+                return
+                
+            if entry[3].get() != '':
+                Vals[3] = entry[3].get()
+            else:
+                showError(14)
+                con.close()
+                return
+            
+        if entry[3].get() != '':
+            Vals[3] = entry[3].get()
+
         try:
-            cursor.execute(statement,(Vals[0],Vals[1]))
+            cursor.execute(statement,(Vals[0],Vals[1],Vals[2],Vals[3]))
             con.commit()
         except sqlite3.Error as e:
             con.rollback()
-            showError(3,e); con.close()
+            showError(3,e)
+            con.close()
             return
         showError(-1)
 
